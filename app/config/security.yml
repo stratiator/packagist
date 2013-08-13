@@ -27,8 +27,8 @@ security:
             logout:       true
             anonymous:    true
             oauth:
-                resource_owners:
-                    github: "/login/check-github"
+                resource_owners: %oauth_resource_owner_urls%
+
                 login_path:        /login
                 failure_path:      /login
                 oauth_user_provider:

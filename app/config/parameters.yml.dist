@@ -12,7 +12,7 @@ parameters:
     mailer_from_email: admin@example.org
     mailer_from_name: Admin Team
 
-    # packagist_host: example.org
+    packagist_host: example.org
     # router.request_context.host: %packagist_host%
     # router.request_context.scheme: https
 
@@ -23,8 +23,13 @@ parameters:
     google_analytics:
         ga_key:
 
-    github.client_id:
-    github.client_secret:
+    oauth_resource_owners:
+        github:
+            type:          github
+            client_id:
+            client_secret:
+    oauth_resource_owner_urls:
+        github: "/login/check-github"
 
     # -- performance features --
     # set both to apc to optimize things if it is available
