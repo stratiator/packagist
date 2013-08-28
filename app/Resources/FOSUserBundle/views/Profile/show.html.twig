@@ -7,7 +7,7 @@
         <h1>{{ user.username }} (that's you!)</h1>
         <p><a href="{{ path('fos_user_profile_edit') }}">Edit your information</a></p>
         <p><a href="{{ path('fos_user_change_password') }}">Change your password</a></p>
-        {% if  not user.githubId %}
+        {% if not user.accounts | length %}
             {% for owner in hwi_oauth_resource_owners() %}
                 <p><a href="{{ hwi_oauth_login_url(owner) }}">Connect your {{ owner | trans({}, 'HWIOAuthBundle') }} account</a></p>
             {% endfor %}

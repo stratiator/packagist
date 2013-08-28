@@ -25,4 +25,28 @@ class UserRepository extends EntityRepository
             ->where('u.apiToken IS NULL');
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * @param $provider
+     * @param $username
+     * @return User
+     */
+    public function findByOauthProviderAndUsername($provider, $username)
+    {
+        $qb = $this->createQueryBuilder('u');
+        $qb = $qb
+            ->addSelect('a')
+            ->join('u.accounts', 'a')
+            ->where(
+                $qb->expr()->andX(
+                    $qb->expr()->eq('a.provider', ':provider'),
+                    $qb->expr()->eq('a.username', ':username')
+                )
+            )
+            ->setParameter(':provider', $provider)
+            ->setParameter(':username', $username);
+
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
 }

@@ -51,16 +51,13 @@ class User extends BaseUser
     private $apiToken;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @var string
+     * @ORM\OneToMany(
+     *      targetEntity="Packagist\WebBundle\Entity\UserConnectedAccount",
+     *      mappedBy="user",
+     *      cascade={"persist"}
+     * )
      */
-    private $githubId;
-
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @var string
-     */
-    private $githubToken;
+    private $accounts;
 
     /**
      * @ORM\Column(type="boolean", options={"default"=true})
@@ -165,43 +162,23 @@ class User extends BaseUser
     }
 
     /**
-     * Get githubId.
+     * Add accounts
      *
-     * @return string
+     * @param \Packagist\WebBundle\Entity\UserConnectedAccount $authors
      */
-    public function getGithubId()
+    public function addAccounts(\Packagist\WebBundle\Entity\UserConnectedAccount $accounts)
     {
-        return $this->githubId;
+        $this->accounts[] = $accounts;
     }
 
     /**
-     * Set githubId.
+     * Get authors
      *
-     * @param string $githubId
+     * @return \Doctrine\Common\Collections\Collection
      */
-    public function setGithubId($githubId)
+    public function getAccounts()
     {
-        $this->githubId = $githubId;
-    }
-
-    /**
-     * Get githubId.
-     *
-     * @return string
-     */
-    public function getGithubToken()
-    {
-        return $this->githubToken;
-    }
-
-    /**
-     * Set githubToken.
-     *
-     * @param string $githubToken
-     */
-    public function setGithubToken($githubToken)
-    {
-        $this->githubToken = $githubToken;
+        return $this->accounts;
     }
 
     /**

@@ -13,10 +13,11 @@
 namespace Packagist\WebBundle\Security\Provider;
 
 use FOS\UserBundle\Model\UserManagerInterface;
-use HWI\Bundle\OAuthBundle\Connect\AccountConnectorInterface;
 use HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface;
 use HWI\Bundle\OAuthBundle\Security\Core\Exception\AccountNotLinkedException;
 use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
+use Packagist\WebBundle\Entity\UserConnectedAccount;
+use Packagist\WebBundle\Entity\UserRepository;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -29,11 +30,18 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
     private $userManager;
 
     /**
-     * @param UserManagerInterface $userManager
+     * @var UserRepository
      */
-    public function __construct(UserManagerInterface $userManager)
+    private $userRepository;
+
+    /**
+     * @param UserManagerInterface $userManager
+     * @param UserRepository $userRepository
+     */
+    public function __construct(UserManagerInterface $userManager, UserRepository $userRepository)
     {
         $this->userManager = $userManager;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -41,12 +49,10 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
      */
     public function connect($user, UserResponseInterface $response)
     {
+        $resourceOwnerName = $response->getResourceOwner()->getName();
         $username = $response->getUsername();
+        $previousUser = $this->userRepository->findByOauthProviderAndUsername($resourceOwnerName, $username);
 
-        $previousUser = $this->userManager->findUserBy(array('githubId' => $username));
-
-        $user->setGithubId($username);
-        $user->setGithubToken($response->getAccessToken());
 
         // The account is already connected. Do nothing
         if ($previousUser === $user) {
@@ -61,6 +67,16 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
         }
 
         $this->userManager->updateUser($user);
+
+        $account = new UserConnectedAccount();
+        $account->setProvider($resourceOwnerName);
+        $account->setToken($response->getAccessToken());
+        $account->setUsername($username);
+        $account->setUser($user);
+
+        $user->addAccounts($account);
+
+        $this->userManager->updateUser($user);
     }
 
     /**
@@ -68,14 +84,15 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
      */
     public function loadUserByOAuthUserResponse(UserResponseInterface $response)
     {
+        $resourceOwnerName = $response->getResourceOwner()->getName();
         $username = $response->getUsername();
-        $user = $this->userManager->findUserBy(array('githubId' => $username));
+        $user = $this->userRepository->findByOauthProviderAndUsername($resourceOwnerName, $username);
 
         if (!$user) {
             throw new AccountNotLinkedException(sprintf('No user with github username "%s" was found.', $username));
         }
 
-        if (!$user->getGithubToken()) {
+        if (!$user->getAccounts()->first()->getToken()) {
             $user->setGithubToken($response->getAccessToken());
             $this->userManager->updateUser($user);
         }
