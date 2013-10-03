@@ -247,7 +247,7 @@ div.box > p:last-child {
   -moz-border-radius: 6px;
   border-radius: 6px;
   background-color: #fff;
-  background-position: 6px 6px;
+  background-position: 6px center;
   background-repeat: no-repeat;
   display: block;
 }
