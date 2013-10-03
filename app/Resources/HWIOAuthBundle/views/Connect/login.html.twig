@@ -31,16 +31,20 @@
                 <input type="submit" id="_submit" name="_submit" value="{{ 'security.login.submit'|trans({}, 'FOSUserBundle') }}" />
             </form>
 
-            <p>
+            <div>
                 <a href="{{ path('fos_user_resetting_request') }}">Forgot password?</a>
-                {% for owner in hwi_oauth_resource_owners() %}
-                    <a class="login-{{ owner }}" href="{{ hwi_oauth_login_url(owner) }}">Login with {{ owner | trans({}, 'HWIOAuthBundle') }}</a> <br />
-                {% endfor %}
-            </p>
+	            <div class="login-buttons">
+	      	        {% for owner in hwi_oauth_resource_owners() %}
+	      	            <a class="login-button {{ owner }}" href="{{ hwi_oauth_login_url(owner) }}">Login with {{ owner | trans({}, 'HWIOAuthBundle') }}</a>
+	      	        {% endfor %}
+	      	    </div>
+            </div>
         </div>
     {% else %}
-        {% for owner in hwi_oauth_resource_owners() %}
-            <a class="login-{{ owner }}" href="{{ hwi_oauth_login_url(owner) }}">Login with {{ owner | trans({}, 'HWIOAuthBundle') }}</a> <br />
-        {% endfor %}
+	    <div class="login-buttons">
+	        {% for owner in hwi_oauth_resource_owners() %}
+	            <a class="login-button {{ owner }}" href="{{ hwi_oauth_login_url(owner) }}">Login with {{ owner | trans({}, 'HWIOAuthBundle') }}</a>
+	        {% endfor %}
+	    </div>
     {% endif %}
 {% endblock hwi_oauth_content %}
