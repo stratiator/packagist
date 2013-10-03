@@ -69,6 +69,7 @@ class User extends BaseUser
     {
         $this->packages = new ArrayCollection();
         $this->authors = new ArrayCollection();
+	    $this->accounts = new ArrayCollection();
         $this->createdAt = new \DateTime();
         parent::__construct();
     }
@@ -164,7 +165,7 @@ class User extends BaseUser
     /**
      * Add accounts
      *
-     * @param \Packagist\WebBundle\Entity\UserConnectedAccount $authors
+     * @param \Packagist\WebBundle\Entity\UserConnectedAccount $accounts
      */
     public function addAccounts(\Packagist\WebBundle\Entity\UserConnectedAccount $accounts)
     {

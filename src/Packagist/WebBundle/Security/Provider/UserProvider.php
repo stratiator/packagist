@@ -16,8 +16,10 @@ use FOS\UserBundle\Model\UserManagerInterface;
 use HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface;
 use HWI\Bundle\OAuthBundle\Security\Core\Exception\AccountNotLinkedException;
 use HWI\Bundle\OAuthBundle\Security\Core\User\OAuthAwareUserProviderInterface;
+use Packagist\WebBundle\Entity\User;
 use Packagist\WebBundle\Entity\UserConnectedAccount;
 use Packagist\WebBundle\Entity\UserRepository;
+use Packagist\WebBundle\Model\UserConnectedAccountManager;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -33,21 +35,32 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
      * @var UserRepository
      */
     private $userRepository;
+	/**
+	 * @var UserConnectedAccountManager
+	 */
+	private $userAccountManager;
 
-    /**
-     * @param UserManagerInterface $userManager
-     * @param UserRepository $userRepository
-     */
-    public function __construct(UserManagerInterface $userManager, UserRepository $userRepository)
-    {
-        $this->userManager = $userManager;
-        $this->userRepository = $userRepository;
-    }
+	/**
+	 * @param UserManagerInterface        $userManager
+	 * @param UserRepository              $userRepository
+	 * @param UserConnectedAccountManager $userAccountManager
+	 */
+	public function __construct(
+		UserManagerInterface $userManager,
+		UserRepository $userRepository,
+		UserConnectedAccountManager $userAccountManager
+	)
+	{
+		$this->userManager        = $userManager;
+		$this->userRepository     = $userRepository;
+		$this->userAccountManager = $userAccountManager;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    public function connect($user, UserResponseInterface $response)
+	/**
+	 * @param User                  $user
+	 * @param UserResponseInterface $response
+	 */
+	public function connect($user, UserResponseInterface $response)
     {
         $resourceOwnerName = $response->getResourceOwner()->getName();
         $username = $response->getUsername();
@@ -61,12 +74,10 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
 
         // 'disconnect' a previous account
         if (null !== $previousUser) {
-            $previousUser->setGithubId(null);
-            $previousUser->setGithubToken(null);
-            $this->userManager->updateUser($previousUser);
+	        $this->userAccountManager->deleteConnectedAccountFromUser($previousUser, $resourceOwnerName);
         }
 
-        $this->userManager->updateUser($user);
+	    $this->userManager->updateUser($user);
 
         $account = new UserConnectedAccount();
         $account->setProvider($resourceOwnerName);
@@ -89,11 +100,14 @@ class UserProvider implements OAuthAwareUserProviderInterface, UserProviderInter
         $user = $this->userRepository->findByOauthProviderAndUsername($resourceOwnerName, $username);
 
         if (!$user) {
-            throw new AccountNotLinkedException(sprintf('No user with github username "%s" was found.', $username));
+            throw new AccountNotLinkedException(
+	            sprintf('No user with %s user "%s" was found.', $resourceOwnerName, $username)
+            );
         }
 
-        if (!$user->getAccounts()->first()->getToken()) {
-            $user->setGithubToken($response->getAccessToken());
+	    $userConnectedAccount = $this->userAccountManager->getUserAccountOfProvider($user, $resourceOwnerName);
+	    if (!$userConnectedAccount->getToken()) {
+		    $userConnectedAccount->setToken($response->getAccessToken());
             $this->userManager->updateUser($user);
         }
 

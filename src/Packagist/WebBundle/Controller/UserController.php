@@ -12,6 +12,8 @@
 
 namespace Packagist\WebBundle\Controller;
 
+use Packagist\WebBundle\Model\UserConnectedAccountManager;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -63,6 +65,7 @@ class UserController extends Controller
                 'packages' => $packages,
                 'meta' => $this->getPackagesMetadata($packages),
                 'user' => $user,
+	            'userAccountManager' => $this->get('packagist.user_connected_account_manager')
             )
         );
     }
@@ -156,6 +159,23 @@ class UserController extends Controller
 
         return new Response('{"status": "success"}', 204);
     }
+
+	/**
+	 * @Route("/user/disconnect-account/{provider}/", name="user_disconnect_account")
+	 */
+	public function disconnectAccountAction($provider)
+	{
+		$user = $this->container->get('security.context')->getToken()->getUser();
+        if (!is_object($user) || !$user instanceof UserInterface) {
+            throw new AccessDeniedException('This user does not have access to this section.');
+        }
+
+		/* @var UserConnectedAccountManager $userAccountManager */
+		$userAccountManager = $this->get('packagist.user_connected_account_manager');
+		$userAccountManager->deleteConnectedAccountFromUser($user, $provider);
+
+		return new RedirectResponse($this->generateUrl('fos_user_profile_show'));
+	}
 
     protected function getUserPackages($req, $user)
     {

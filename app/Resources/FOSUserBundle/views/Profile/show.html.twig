@@ -3,17 +3,26 @@
 {% import "PackagistWebBundle::macros.html.twig" as macros %}
 
 {% block content %}
+
     <div class="box clearfix">
         <h1>{{ user.username }} (that's you!)</h1>
         <p><a href="{{ path('fos_user_profile_edit') }}">Edit your information</a></p>
         <p><a href="{{ path('fos_user_change_password') }}">Change your password</a></p>
-        {% if not user.accounts | length %}
-            {% for owner in hwi_oauth_resource_owners() %}
-                <p><a href="{{ hwi_oauth_login_url(owner) }}">Connect your {{ owner | trans({}, 'HWIOAuthBundle') }} account</a></p>
-            {% endfor %}
-        {% endif %}
         <p><a href="{{ path('user_favorites', {name: app.user.username}) }}">View your favorites</a></p>
         <p><a href="{{ path('user_profile', {name: app.user.username}) }}">View your public profile</a></p>
+
+	    {% if hwi_oauth_resource_owners() %}
+		    <h1>OAuth connections</h1>
+            {% for owner in hwi_oauth_resource_owners() %}
+                <p>
+                    {% if userAccountManager.isUserConnectedToProvider(user, owner) %}
+                        <a href="{{ path('user_disconnect_account', { provider: owner }) }}">Disconnect your {{ owner }} account</a>
+                    {% else %}
+                        <a href="{{ hwi_oauth_login_url(owner) }}">Connect your {{ owner | trans({}, 'HWIOAuthBundle') }} account</a>
+                    {% endif %}
+                </p>
+            {% endfor %}
+        {%  endif %}
 
         {% if app.user.apiToken %}
             <h1>Your API Token</h1>
